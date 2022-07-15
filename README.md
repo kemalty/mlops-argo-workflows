@@ -17,10 +17,12 @@ Kubernetes related stuff on your local without having to wait.
 We will work with Argo on our local machines. I am using a MacBook, so most of the code/examples are for Unix based OS.
 However, you will be able to substitute the Mac or Unix based commands and run the examples.
 
-## 1. Install Kind
+## 1. Install Required Tools
+
+**Kind**
 
 [Kind](https://kind.sigs.k8s.io/) is a tool for running local Kubernetes clusters using Docker container “nodes”. It 
-can easily spin up local Kubernetes cluster. It is (I think) lighter than minikube and definitely easier to use.
+can easily spin up local Kubernetes cluster.
 
 If you are on Mac, you can easily install it via: 
 
@@ -36,6 +38,20 @@ The Kind version I am using is:
 ╰─$ kind --version                                                                                                                               130 ↵
 kind version 0.14.0
 ```
+
+**Kubectl**
+
+[Kubectl](https://kubernetes.io/docs/reference/kubectl/kubectl/) is the CLI tool for execute commands against 
+Kubernetes. 
+
+If you are on Mac, you can install it via:
+
+```shell
+╰─$ brew install kubectl
+```
+
+For other OS, follow the guidelines [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
+
 
 ## 2. Configure Kind
 
@@ -84,37 +100,32 @@ Context "kind-argo" modified.
 Active namespace is "argo".
 ```
 
+_If you dont wanna use `kubens`, you will need to add `-n argo` to indicate namespace in your `kubectl` operations._
+
 ## 4. Install Argo in the Cluster
 
-Argo does not come with the K8s package. Therefore we need to install it ourselves. This can be a bit tricky due to 
-version matching between Argo and K8s. After trial and error, I have found that the following manifest work with my 
-Kind, and K8s versions.
-
-Here are my versions:
+We need to install Argo ourselves. Let's install it from the ArgoProj repo:
 
 ```shell
-$ kubectl version
-Client Version: version.Info{Major:"1", Minor:"18", GitVersion:"v1.18.8", GitCommit:"9f2892aab98fe339f3bd70e3c470144299398ace", GitTreeState:"clean", BuildDate:"2020-08-13T16:12:48Z", GoVersion:"go1.13.15", Compiler:"gc", Platform:"darwin/amd64"}
-Server Version: version.Info{Major:"1", Minor:"24", GitVersion:"v1.24.0", GitCommit:"4ce5a8954017644c5420bae81d72b09b735c21f0", GitTreeState:"clean", BuildDate:"2022-05-19T15:39:43Z", GoVersion:"go1.18.1", Compiler:"gc", Platform:"linux/amd64"}
-╰─$ kind --version
-kind version 0.14.0
+╰─$ kubectl apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/master/manifests/quick-start-postgres.yaml
+customresourcedefinition.apiextensions.k8s.io/clusterworkflowtemplates.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/cronworkflows.argoproj.io created
+...
 ```
 
-You can use the Argo manifest under `installation/argo_install.yaml` that works with those versions.  To do that, execute:
+Now we must wait a bit for all the pods to be up and running... You can see the status of the pods via:
 
 ```shell
-╰─$ kubectl apply -n argo -f installation/argo_install.yaml
+╰─$ watch kubectl get pods
+...
 ```
 
-Lastly, we will create a role rebinding:
+When all the pods are up, initiate the port-forwarding so that we can access the Argo's UI:
 
 ```shell
-kubectl create rolebinding default-admin --clusterrole=admin --serviceaccount=argo:default -n argo
-rolebinding.rbac.authorization.k8s.io/default-admin created
+╰─$ kubectl port-forward -n argo deployment/argo-server 2746:2746
+Forwarding from 127.0.0.1:2746 -> 2746
 ```
-
-_Pro tip: We don't need to use `-n argo` in each step because we are already operating in that namespace._
-
 
 ## 5. Test It!
 
@@ -156,6 +167,8 @@ STEP                  TEMPLATE  PODNAME            DURATION  MESSAGE
         \    \        __/
           \____\______/
 ```
+
+Also, open up the Argo UI and see if it is up and running: [https://localhost:2746](https://localhost:2746).
 
 Looking good! We are ready to roll! 🤘
 
