@@ -1,0 +1,117 @@
+# Based on: https://github.com/argoproj/argo-workflows/blob/master/examples/workflow-template/templates.yaml
+#
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow  # This is a one-off workflow.
+
+# We will list our metadata about the workflow in here
+# https://argoproj.github.io/argo-workflows/fields/#objectmeta
+metadata:
+  # This will generate a unique name each time we run the workflow
+  generateName: dag-workflow-
+
+  labels:
+    # We want to keep all the runs status
+    # https://argoproj.github.io/argo-workflows/workflow-archive/
+    workflows.argoproj.io/archive-strategy: "always"
+
+  annotations:
+    # Some metadata for my understanding
+    workflows.argoproj.io/description: |
+      This is a workflow that has multiple steps.
+    workflows.argoproj.io/owner: ml-team-1@thebeat.co
+
+
+# Here, we will start specify how our workflow will run
+# https://argoproj.github.io/argo-workflows/fields/#workflowspec
+spec:
+  # This will point to the template that will start the workflow
+  # main-linear: Linear DAG example
+  # main-parallel: Parallel DAG example
+  entrypoint: main-parallel
+
+  # The templates are units of execution. They represent a node in the DAG. They are reusable. Each template will run
+  # specified commands against the specified Docker image
+  # https://argoproj.github.io/argo-workflows/fields/#template
+  templates:
+  - name: whale-say
+    # Instead of directly typing what the whale will say, we will pass it as a template parameter
+    inputs:
+      # You can list your parameters under here.
+      parameters:
+        - name: say-text
+
+    container:
+      # The image that want to run
+      image: docker/whalesay:latest
+      # The command we want to run inside the container
+      command: [cowsay]
+      # The arguments for the command in any
+      args: ["{{inputs.parameters.say-text}}"]
+
+  # A linear DAG template. The tasks execute consecutively.
+  # Will look like this:
+  #  ┌─────────┐
+  #  │WF Entry │
+  #  ├─────────┤
+  #  └────┼────┘
+  #       │
+  #  ┌────▼────┐
+  #  │Task:    │
+  #  │say-world│
+  #  └────┬────┘
+  #       │
+  #  ┌────▼────┐
+  #  │Task:    │
+  #  │say-there│
+  #  └─────────┘
+  #
+  - name: main-linear
+    dag:
+      tasks:
+      - name: say-world
+        template: whale-say
+        arguments:
+          # I can pass the argument values for my teamplate
+          parameters:
+          - name: say-text
+            value: "Hello World!"
+
+      - name: say-there
+        template: whale-say
+        # I can use "depends" to indicate which tasks depend on which other taks in my dag
+        depends: "say-world"
+        arguments:
+          parameters:
+          - name: say-text
+            value: "Hello There!"
+
+
+  # A parallel DAG template. The tasks will execute in parallel
+  # Will look like this:
+  #             ┌─────────┐
+  #             │WF Entry │
+  #             │         │
+  #             ├─────────┤
+  #           ┌─┴─────────┴─┐
+  #           │             │
+  #      ┌────▼────┐   ┌────▼────┐
+  #      │Task:    │   │Task:    │
+  #      │say-world│   │say-there│
+  #      └─────────┘   └─────────┘
+  #
+  - name: main-parallel
+    dag:
+      tasks:
+      - name: say-world
+        template: whale-say
+        arguments:
+          parameters:
+            - name: say-text
+              value: "Hello World!"
+
+      - name: say-there
+        template: whale-say
+        arguments:
+          parameters:
+            - name: say-text
+              value: "Hello There!"

@@ -52,6 +52,18 @@ If you are on Mac, you can install it via:
 
 For other OS, follow the guidelines [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
 
+**Argo CLI**
+
+We will use Argo CLI to manage our workflows.
+
+If you are on Mac, you can easily install it via:
+
+```shell
+╰─$ brew install argoproj/tap/argo
+```
+
+For other OS, follow the guidelines on Argo's release page [here](https://github.com/argoproj/argo-workflows/releases/tag/v3.3.8).
+
 
 ## 2. Configure Kind
 

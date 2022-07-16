@@ -1,0 +1,44 @@
+# Based on: https://raw.githubusercontent.com/argoproj/argo/master/examples/hello-world.yaml
+#
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow  # This is a one-off workflow.
+
+# We will list our metadata about the workflow in here
+# https://argoproj.github.io/argo-workflows/fields/#objectmeta
+metadata:
+  # This will generate a unique name each time we run the workflow
+  generateName: simple-workflow-
+
+  labels:
+    # We want to keep all the runs status
+    # https://argoproj.github.io/argo-workflows/workflow-archive/
+    workflows.argoproj.io/archive-strategy: "always"
+
+  annotations:
+    # Some metadata for my understanding
+    workflows.argoproj.io/description: |
+      This is a simple workflow that will run only once.
+    workflows.argoproj.io/owner: ml-team-1@thebeat.co
+
+
+# Here, we will start specify how our workflow will run
+# https://argoproj.github.io/argo-workflows/fields/#workflowspec
+spec:
+
+  # This will point to the template that will start the workflow
+  entrypoint: whalesay
+
+  # The templates are units of execution. They represent a node in the DAG. They are reusable. Each template will run
+  # specified commands against the specified Docker image
+  # https://argoproj.github.io/argo-workflows/fields/#template
+  templates:
+  - name: whalesay
+    container:
+      # The image that want to run
+      image: docker/whalesay:latest
+
+      # The command we want to run inside the container
+      command: [cowsay]
+
+      # The arguments for the command in any
+      args: ["Hello MLOps Community!"]
