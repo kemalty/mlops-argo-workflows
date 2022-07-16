@@ -1,0 +1,33 @@
+# I have removed some fields here from the previous example to reduce boilerplate
+#
+# Based on: https://github.com/argoproj/argo-workflows/blob/master/examples/arguments-artifacts.yaml
+#
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+
+metadata:
+  generateName: artifacts-workflow-
+  labels:
+    workflows.argoproj.io/archive-strategy: "always"
+
+spec:
+
+  entrypoint: whale-say
+
+  arguments:
+    artifacts:
+      - name: whale-text
+        http:
+          url: https://raw.githubusercontent.com/kemalty/mlops-argo-workflows/main/README.md
+
+  templates:
+  - name: whale-say
+    inputs:
+      artifacts:
+        - name: whale-text
+          path: "/tmp/say-text.txt"
+          mode: 755
+    container:
+      image: docker/whalesay:latest
+      command: [ sh, -c ]
+      args: [ "cowsay $(cat /tmp/say-text.txt)" ]
