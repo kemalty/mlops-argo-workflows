@@ -9,7 +9,7 @@ This repo includes the code samples and how-to's that are presented in the MLOps
 - [Session 🎙](https://mlops.community/watch/argo-workflows_eZ1GowAF3vHExq/)
 - [Reach me on LinkedIn ✉️](https://www.linkedin.com/in/kemaltugrulyesilbek/)
 
-## Getting Started
+# Getting Started
 
 When you are working on Argo Workflows, it is handy to keep things local. You can try and test your workflows and other 
 Kubernetes related stuff on your local without having to wait. 
@@ -192,4 +192,21 @@ can easily bring down the cluster you created with a simple command, which will 
 ```shell
 ╰─$ kind delete clusters argo                                                                                                                     130 ↵
 Deleted clusters: ["argo"]
+```
+
+# Running Examples
+
+There are examples in numbered and ordered directories. You can run them by against your Argo deployment.
+
+For Workflows:
+
+```shell
+argo submit <directory>/workflow.yaml
+```
+
+
+For CronWorkflows:
+
+```shell
+`argo cron create <directory>/workflow.yaml`
 ```

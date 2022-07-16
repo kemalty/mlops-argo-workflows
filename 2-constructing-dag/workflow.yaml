@@ -1,3 +1,5 @@
+# I have removed some fields here from the previous example to reduce boilerplate
+#
 # Based on: https://github.com/argoproj/argo-workflows/blob/master/examples/workflow-template/templates.yaml
 #
 apiVersion: argoproj.io/v1alpha1
@@ -10,16 +12,7 @@ metadata:
   generateName: dag-workflow-
 
   labels:
-    # We want to keep all the runs status
-    # https://argoproj.github.io/argo-workflows/workflow-archive/
     workflows.argoproj.io/archive-strategy: "always"
-
-  annotations:
-    # Some metadata for my understanding
-    workflows.argoproj.io/description: |
-      This is a workflow that has multiple steps.
-    workflows.argoproj.io/owner: ml-team-1@thebeat.co
-
 
 # Here, we will start specify how our workflow will run
 # https://argoproj.github.io/argo-workflows/fields/#workflowspec

@@ -1,0 +1,63 @@
+# I have removed some fields here from the previous example to reduce boilerplate
+#
+# Based on: https://github.com/argoproj/argo-workflows/blob/master/examples/retry-on-error.yaml
+#
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+
+metadata:
+  generateName: failing-cron-workflow-
+  labels:
+    workflows.argoproj.io/archive-strategy: "always"
+
+spec:
+  schedule: "* * * * *"
+  timezone: "UTC"
+
+  # In my application, running workflows concurrently may result in bugs or duplicated data.
+  # That is why I only want one instance of this workflow to run at any time.
+  # https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#concurrency-policy
+  concurrencyPolicy: "Forbid"
+
+
+
+
+  workflowSpec:
+    entrypoint: main-linear
+
+    templates:
+      - name: whale-say
+        inputs:
+          parameters:
+            - name: say-text
+        container:
+          image: docker/whalesay:latest
+          command: [ cowsay ]
+          args: [ "{{inputs.parameters.say-text}}" ]
+
+      - name: destined-to-fail
+        # I want to retry this step if I encounter an issue at runtime
+        # https://argoproj.github.io/argo-workflows/fields/#retrystrategy
+        retryStrategy:
+          # I will retry this step at most 2 times. After that, let fail completely.
+          limit: "2"
+          # No matter what the reason is, I want this task to be retried
+          retryPolicy: "Always"
+        container:
+          image: docker/whalesay:latest
+          # Whoops! Looks like I made a typo here! This task/stop will fail upon execution.
+          command: [ cowwsay ]
+
+      - name: main-linear
+        dag:
+          tasks:
+            - name: say-world
+              template: whale-say
+              arguments:
+                parameters:
+                  - name: say-text
+                    value: "Hello World!"
+
+            - name: buggy-task
+              template: destined-to-fail
+              depends: "say-world"

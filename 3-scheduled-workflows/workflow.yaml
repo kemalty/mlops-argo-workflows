@@ -1,0 +1,58 @@
+# I have removed some fields here from the previous example to reduce boilerplate
+#
+# Based on: https://github.com/argoproj/argo-workflows/blob/master/examples/cron-workflow.yaml
+#
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow  # This is workflow will run on a schedule.
+
+# We will list our metadata about the workflow in here
+# https://argoproj.github.io/argo-workflows/fields/#objectmeta
+metadata:
+  # This will generate a unique name each time we run the workflow
+  generateName: cron-workflow-
+
+  labels:
+    workflows.argoproj.io/archive-strategy: "always"
+
+# Here, we will start specify how our workflow will run
+# https://argoproj.github.io/argo-workflows/fields/#workflowspec
+spec:
+
+  # It will run every minute. You can use an online tool to create cron expressions: https://crontab.guru/
+  schedule: "* * * * *"
+
+  # I believe that it is always a good idea to define the timezone yourself instead of relying on a default
+  timezone: "UTC"
+
+  # From here, we define our workflow like we did in regular Workflows before
+  workflowSpec:
+    entrypoint: main-linear
+
+    templates:
+      - name: whale-say
+        inputs:
+          parameters:
+            - name: say-text
+
+        container:
+          image: docker/whalesay:latest
+          command: [ cowsay ]
+          args: [ "{{inputs.parameters.say-text}}" ]
+
+      - name: main-linear
+        dag:
+          tasks:
+            - name: say-world
+              template: whale-say
+              arguments:
+                parameters:
+                  - name: say-text
+                    value: "Hello World!"
+
+            - name: say-there
+              template: whale-say
+              depends: "say-world"
+              arguments:
+                parameters:
+                  - name: say-text
+                    value: "Hello There!"
